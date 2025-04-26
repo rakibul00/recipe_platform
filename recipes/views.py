@@ -3,9 +3,11 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse_lazy
 from django.contrib.auth.decorators import login_required
-from .models import Recipe, Category, Review, Collection, UserProfile
+from .models import Recipe, Category, Review, Collection
 from .forms import RecipeForm, ReviewForm, CollectionForm, UserProfileForm
 from django.db.models import Q
+from django.db import IntegrityError
+from django.contrib import messages
 
 
 # Public Views
@@ -18,6 +20,8 @@ def home(request):
     })
 
 
+
+
 class RecipeListView(ListView):
     model = Recipe
     template_name = 'recipes/recipe_list.html'
@@ -27,17 +31,24 @@ class RecipeListView(ListView):
     def get_queryset(self):
         queryset = Recipe.objects.filter(is_published=True)
 
-        # Get category from URL
-        category = self.request.GET.get('category')
-        if category:
-            queryset = queryset.filter(category__name=category)  # Ensure this matches your model
+        # Get search query from URL
+        search_query = self.request.GET.get('search')
+        if search_query:
+            queryset = queryset.filter(
+                Q(title__icontains=search_query) |
+                Q(description__icontains=search_query) |
+                Q(ingredients__icontains=search_query)
+            )
 
         return queryset.order_by('-created_at')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['categories'] = Category.objects.all()  # Pass all categories to the template
+        context['categories'] = Category.objects.all()  # Pass categories for filtering
+        context['search_query'] = self.request.GET.get('search', '')  # Pass search query to template
         return context
+
+
 
 class RecipeDetailView(DetailView):
     model = Recipe
@@ -48,6 +59,8 @@ class RecipeDetailView(DetailView):
         context = super().get_context_data(**kwargs)
         context['review_form'] = ReviewForm()
         return context
+
+
 
 
 # Protected Views (require login)
@@ -62,6 +75,8 @@ class RecipeCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+
+
 class RecipeUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Recipe
     form_class = RecipeForm
@@ -70,6 +85,8 @@ class RecipeUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     def test_func(self):
         recipe = self.get_object()
         return self.request.user == recipe.author
+
+
 
 
 class RecipeDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
@@ -82,9 +99,7 @@ class RecipeDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
         return self.request.user == recipe.author
 
 
-from django.db import IntegrityError
-from django.shortcuts import get_object_or_404, redirect
-from django.contrib import messages
+
 
 @login_required
 def add_review(request, recipe_id):
@@ -105,10 +120,16 @@ def add_review(request, recipe_id):
             messages.error(request, "There was an error with your review. Please try again.")
     return redirect('recipe-detail', pk=recipe_id)
 
+
+
+
 def recipe_search(request):
     query = request.GET.get('q')
     recipes = Recipe.objects.filter(ingredients__icontains=query) if query else Recipe.objects.all()
     return render(request, 'recipes/recipe_list.html', {'recipes': recipes, 'query': query})
+
+
+
 # Profile Views
 # class UserProfileView(LoginRequiredMixin, DetailView):
 #     model = UserProfile
@@ -136,6 +157,8 @@ def edit_profile(request):
     return render(request, 'recipes/edit_profile.html', {'form': form})
 
 
+
+
 # Collection Views
 class CollectionCreateView(LoginRequiredMixin, CreateView):
     model = Collection
@@ -148,7 +171,7 @@ class CollectionCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
-from django.views.generic.edit import UpdateView, DeleteView
+
 
 class ReviewUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Review

@@ -5,10 +5,11 @@
 {% block content %}
 <div class="row mb-4">
     <div class="col-md-8">
-        <form method="get" class="d-flex">
-            <input type="text" name="search" class="form-control me-2"
-                   placeholder="Search recipes..." value="{{ request.GET.search }}">
-            <button type="submit" class="btn btn-primary">Search</button>
+        <form method="get" action="{% url 'recipe-list' %}" class="mb-4">
+            <div class="input-group">
+                <input type="text" name="search" class="form-control" placeholder="Search recipes..." value="{{ search_query }}">
+                <button class="btn btn-primary" type="submit">Search</button>
+            </div>
         </form>
     </div>
 </div>

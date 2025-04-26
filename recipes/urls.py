@@ -12,7 +12,6 @@ urlpatterns = [
     path('collection/new/', views.CollectionCreateView.as_view(), name='collection-create'),
     path('review/<int:pk>/edit/', views.ReviewUpdateView.as_view(), name='edit-review'),
     path('review/<int:pk>/delete/', views.ReviewDeleteView.as_view(), name='delete-review'),
-
     path('search/', views.recipe_search, name='recipe-search'),
    
 ]
