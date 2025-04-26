@@ -1,0 +1,17 @@
+
+
+{% extends 'recipes/base.html' %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="container mt-5 ">
+    <h1 class=" text-center">Login</h1>
+    <form method="POST">
+        {% csrf_token %}
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-success">Login</button>
+    </form>
+    <a href="{% url 'register' %}">Don't have an account? Register</a>
+</div>
+{% endblock %}

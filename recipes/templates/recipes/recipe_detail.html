@@ -1,0 +1,95 @@
+{% extends 'recipes/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ recipe.title }}{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <!-- Recipe Details Section -->
+        <div class="col-md-8 card">
+            {% if recipe.image %}
+            <img src="{{ recipe.image.url }}" class="img-fluid rounded mb-4" alt="{{ recipe.title }}">
+            {% endif %}
+
+            <h1 class="mb-3">{{ recipe.title }}</h1>
+            <p class="text-muted">
+                By <strong>{{ recipe.author }}</strong> |
+                Posted on {{ recipe.created_at|date:"F d, Y" }} |
+                Category: <strong>{{ recipe.category }}</strong>
+            </p>
+
+            <div class="recipe-description mb-4">
+                <h3>Description</h3>
+                <p>{{ recipe.description|linebreaks }}</p>
+            </div>
+
+            <div class="ingredients mb-4">
+                <h3>Ingredients</h3>
+                <p>{{ recipe.ingredients|linebreaks }}</p>
+            </div>
+
+            <div class="instructions mb-4">
+                <h3>Instructions</h3>
+                <p>{{ recipe.instructions|linebreaks }}</p>
+            </div>
+
+            {% if user.is_authenticated and user == recipe.author %}
+            <div class="mb-4">
+                <a href="{% url 'recipe-update' recipe.pk %}" class="btn btn-primary">Edit Recipe</a>
+                <a href="{% url 'recipe-delete' recipe.pk %}" class="btn btn-danger">Delete Recipe</a>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Sidebar Section -->
+        <div class="col-md-4">
+            <!-- Add Review Form -->
+            {% if user.is_authenticated %}
+            <div class="card shadow-sm mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4>Add Review</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" action="{% url 'add-review' recipe.id %}">
+                        {% csrf_token %}
+                        {{ review_form|crispy }}
+                        <button type="submit" class="btn btn-primary w-100 mt-3">Submit Review</button>
+                    </form>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Reviews Section -->
+            <div class="card shadow-sm">
+                <div class="card-header bg-secondary text-white">
+                    <h4>Reviews</h4>
+                </div>
+                <div class="card-body">
+                    {% for review in recipe.reviews.all %}
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ review.user.username }}</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Rating: {{ review.rating }}/5</h6>
+                            <p class="card-text">{{ review.comment }}</p>
+                            <small class="text-muted">{{ review.created_at|date:"F d, Y" }}</small>
+                            {% if user == review.user %}
+                            <div class="mt-3">
+                                <a href="{% url 'edit-review' review.id %}" class="btn btn-sm btn-warning">Edit</a>
+                                <a href="{% url 'delete-review' review.id %}" class="btn btn-sm btn-danger">Delete</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p>No reviews yet.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+
+
